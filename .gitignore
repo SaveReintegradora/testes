@@ -1,0 +1,16 @@
+# Executáveis
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Binários
+/bin/
+/build/
+
+# Dependências
+vendor/
+
+# Arquivos do VSCode
+.vscode/
