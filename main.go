@@ -1,10 +1,14 @@
 package main
 
 import (
+	"minha-api/database"
 	"minha-api/routes"
 )
 
 func main() {
+	database.InitDB()
+	defer database.CloseDB()
+
 	r := routes.SetupRoutes()
-	r.Run(":8080") // Sobe na porta 8080
+	r.Run(":8080")
 }
