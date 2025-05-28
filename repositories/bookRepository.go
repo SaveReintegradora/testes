@@ -5,6 +5,7 @@ import (
 	"errors"
 	"minha-api/database"
 	"minha-api/models"
+	"time"
 )
 
 type BookRepository struct{}
@@ -17,8 +18,8 @@ func (r *BookRepository) GetAll() ([]models.Book, error) {
 	rows, err := database.Conn.Query(
 		context.Background(),
 		`SELECT id, title, author, created_at 
-		 FROM books 
-		 ORDER BY title COLLATE "pt-BR-x-icu"`)
+         FROM books 
+         ORDER BY title COLLATE "pt-BR-x-icu"`)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +41,7 @@ func (r *BookRepository) GetByID(id string) (*models.Book, error) {
 	err := database.Conn.QueryRow(
 		context.Background(),
 		`SELECT id, title, author, created_at 
-		 FROM books WHERE id = $1`,
+         FROM books WHERE id = $1`,
 		id,
 	).Scan(&book.ID, &book.Title, &book.Author, &book.CreatedAt)
 
@@ -51,11 +52,15 @@ func (r *BookRepository) GetByID(id string) (*models.Book, error) {
 }
 
 func (r *BookRepository) Create(book *models.Book) error {
+	// Garante que CreatedAt está preenchido
+	if book.CreatedAt.IsZero() {
+		book.CreatedAt = time.Now()
+	}
 	_, err := database.Conn.Exec(
 		context.Background(),
-		`INSERT INTO books (id, title, author) 
-		 VALUES ($1, $2, $3)`,
-		book.ID, book.Title, book.Author,
+		`INSERT INTO books (id, title, author, created_at) 
+         VALUES ($1, $2, $3, $4)`,
+		book.ID, book.Title, book.Author, book.CreatedAt,
 	)
 	return err
 }
@@ -64,15 +69,18 @@ func (r *BookRepository) Update(book *models.Book) error {
 	cmd, err := database.Conn.Exec(
 		context.Background(),
 		`UPDATE books 
-		 SET title = $1, author = $2 
-		 WHERE id = $3`,
+         SET title = $1, author = $2 
+         WHERE id = $3`,
 		book.Title, book.Author, book.ID,
 	)
 
+	if err != nil {
+		return err
+	}
 	if cmd.RowsAffected() == 0 {
 		return errors.New("not found")
 	}
-	return err
+	return nil
 }
 
 func (r *BookRepository) Delete(id string) error {
@@ -82,8 +90,11 @@ func (r *BookRepository) Delete(id string) error {
 		id,
 	)
 
+	if err != nil {
+		return err
+	}
 	if cmd.RowsAffected() == 0 {
 		return errors.New("not found")
 	}
-	return err
+	return nil
 }
