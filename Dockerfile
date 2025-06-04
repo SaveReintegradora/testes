@@ -16,7 +16,6 @@ FROM debian:bookworm-slim
 WORKDIR /app
 
 COPY --from=builder /app/minha-api .
-COPY .env .env
 
 EXPOSE 8080
 
