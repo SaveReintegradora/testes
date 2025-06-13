@@ -19,4 +19,4 @@ COPY --from=builder /app/minha-api .
 
 EXPOSE 8080
 
-CMD ["./minha-api"]
+CMD ["./minha-api"]      

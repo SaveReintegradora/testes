@@ -12,24 +12,23 @@ import (
 var Conn *pgx.Conn
 
 func InitDB() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Erro ao carregar .env")
+	// Tenta carregar o .env, mas não falha se não existir
+	_ = godotenv.Load()
+
+	dbURL := os.Getenv("DB_URL")
+	if dbURL == "" {
+		log.Fatal("DB_URL não definida")
 	}
 
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DB_URL"))
+	var err error
+	Conn, err = pgx.Connect(context.Background(), dbURL)
 	if err != nil {
-		log.Fatal("Erro ao conectar ao banco:", err)
+		log.Fatalf("Erro ao conectar no banco: %v", err)
 	}
-
-	// Testa a collation em português
-	if _, err := conn.Exec(context.Background(), `SELECT * FROM (VALUES ('ázimo'), ('abelha')) AS t(palavra) ORDER BY palavra COLLATE "pt-BR-x-icu"`); err != nil {
-		log.Println("Aviso: Collation pt-BR-x-icu não disponível. Usando ordenação padrão.")
-	}
-
-	Conn = conn
-	log.Println("Conectado ao PostgreSQL!")
 }
 
 func CloseDB() {
-	Conn.Close(context.Background())
+	if Conn != nil {
+		Conn.Close(context.Background())
+	}
 }
