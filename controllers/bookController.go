@@ -18,7 +18,15 @@ func NewBookController(repo *repositories.BookRepository) *BookController {
 	return &BookController{repo: repo}
 }
 
-// GetBooks - Lista todos os livros
+// GetBooks godoc
+// @Summary      Lista todos os livros
+// @Description  Retorna todos os livros cadastrados
+// @Tags         books
+// @Produce      json
+// @Success      200  {array}   models.Book
+// @Failure      401  {object}  map[string]string
+// @Router       /books [get]
+// @Security     ApiKeyAuth
 func (c *BookController) GetBooks(ctx *gin.Context) {
 	books, err := c.repo.GetAll()
 	if err != nil {
@@ -28,7 +36,18 @@ func (c *BookController) GetBooks(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, books)
 }
 
-// GetBookByID - Busca livro por ID
+// GetBookByID godoc
+// @Summary      Busca livro por ID
+// @Description  Retorna um livro específico pelo ID
+// @Tags         books
+// @Produce      json
+// @Param        id   path      string  true  "ID do livro"
+// @Success      200  {object}  models.Book
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Router       /books/{id} [get]
+// @Security     ApiKeyAuth
 func (c *BookController) GetBookByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 
@@ -45,7 +64,18 @@ func (c *BookController) GetBookByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, book)
 }
 
-// CreateBook - Cria um novo livro
+// CreateBook godoc
+// @Summary      Cria um novo livro
+// @Description  Adiciona um novo livro ao banco de dados
+// @Tags         books
+// @Accept       json
+// @Produce      json
+// @Param        book  body      models.Book  true  "Livro a ser criado"
+// @Success      201   {object}  models.Book
+// @Failure      400   {object}  map[string]string
+// @Failure      401   {object}  map[string]string
+// @Router       /books [post]
+// @Security     ApiKeyAuth
 func (c *BookController) CreateBook(ctx *gin.Context) {
 	var newBook models.Book
 
@@ -70,7 +100,20 @@ func (c *BookController) CreateBook(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, newBook)
 }
 
-// UpdateBook - Atualiza um livro
+// UpdateBook godoc
+// @Summary      Atualiza um livro
+// @Description  Atualiza os dados de um livro existente
+// @Tags         books
+// @Accept       json
+// @Produce      json
+// @Param        id    path      string      true  "ID do livro"
+// @Param        book  body      models.Book true  "Dados atualizados"
+// @Success      200   {object}  models.Book
+// @Failure      400   {object}  map[string]string
+// @Failure      404   {object}  map[string]string
+// @Failure      401   {object}  map[string]string
+// @Router       /books/{id} [put]
+// @Security     ApiKeyAuth
 func (c *BookController) UpdateBook(ctx *gin.Context) {
 	id := ctx.Param("id")
 
@@ -99,7 +142,17 @@ func (c *BookController) UpdateBook(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, updatedBook)
 }
 
-// DeleteBook - Remove um livro
+// DeleteBook godoc
+// @Summary      Remove um livro
+// @Description  Remove um livro pelo ID
+// @Tags         books
+// @Param        id   path      string  true  "ID do livro"
+// @Success      204  {string}  string  "No Content"
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Router       /books/{id} [delete]
+// @Security     ApiKeyAuth
 func (c *BookController) DeleteBook(ctx *gin.Context) {
 	id := ctx.Param("id")
 
