@@ -3,6 +3,7 @@ version: "3.8"
 services:
   db:
     image: postgres:16
+    restart: always
     environment:
       POSTGRES_DB: minha_api_books
       POSTGRES_USER: allan
@@ -19,8 +20,11 @@ services:
       - db
     environment:
       DB_URL: postgres://allan:agripa99@db:5432/minha_api_books?sslmode=disable
+      RUNNING_IN_DOCKER: "true"
     ports:
       - "8080:8080"
+    # Se usar wait-for-it.sh, descomente abaixo:
+    # command: ["/wait-for-it.sh", "db:5432", "--", "./minha-api"]
 
 volumes:
   pgdata:

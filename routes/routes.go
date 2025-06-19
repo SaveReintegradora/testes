@@ -14,6 +14,9 @@ func SetupRoutes() *gin.Engine {
 	repo := repositories.NewBookRepository()
 	controller := controllers.NewBookController(repo)
 
+	fileRepo := repositories.NewFileProcessRepository()
+	fileController := controllers.NewFileProcessController(fileRepo)
+
 	books := r.Group("/books", middlewares.ApiKeyMiddleware())
 	{
 		books.GET("", controller.GetBooks)
@@ -21,6 +24,15 @@ func SetupRoutes() *gin.Engine {
 		books.POST("", controller.CreateBook)
 		books.PUT("/:id", controller.UpdateBook)
 		books.DELETE("/:id", controller.DeleteBook)
+	}
+
+	files := r.Group("/files", middlewares.ApiKeyMiddleware())
+	{
+		files.GET("", fileController.GetAll)
+		files.GET("/:id", fileController.GetByID)
+		files.POST("", fileController.Create)
+		files.PUT("/:id", fileController.Update)
+		files.DELETE("/:id", fileController.Delete)
 	}
 
 	return r

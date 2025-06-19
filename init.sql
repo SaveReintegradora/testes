@@ -6,3 +6,12 @@ CREATE TABLE IF NOT EXISTS books (
     author VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS file_processes (
+    id UUID PRIMARY KEY,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(512) NOT NULL,
+    received_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    status VARCHAR(64) NOT NULL,
+    error_msg TEXT
+);

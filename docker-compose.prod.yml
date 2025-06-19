@@ -3,6 +3,7 @@ version: "3.8"
 services:
   db:
     image: postgres:16
+    restart: always
     environment:
       POSTGRES_DB: minha_api_books
       POSTGRES_USER: allan
@@ -13,6 +14,7 @@ services:
 
   api:
     image: arcanjus3/minha-api:latest
+    restart: always
     depends_on:
       - db
     environment:

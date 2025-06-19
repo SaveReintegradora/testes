@@ -13,7 +13,9 @@ var Conn *pgx.Conn
 
 func InitDB() {
 	// Tenta carregar o .env, mas não falha se não existir
-	_ = godotenv.Load()
+	if os.Getenv("RUNNING_IN_DOCKER") != "true" {
+    _ = godotenv.Load()
+}
 
 	dbURL := os.Getenv("DB_URL")
 	if dbURL == "" {
