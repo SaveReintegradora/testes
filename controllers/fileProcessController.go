@@ -3,6 +3,8 @@ package controllers
 import (
 	"minha-api/models"
 	"minha-api/repositories"
+
+	//	"minha-api/utils"
 	"net/http"
 	"time"
 
@@ -42,17 +44,33 @@ func (c *FileProcessController) GetByID(ctx *gin.Context) {
 }
 
 func (c *FileProcessController) Create(ctx *gin.Context) {
+	file, err := ctx.FormFile("nomeArquivo")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo não enviado ou inválido"})
+		return
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao abrir arquivo"})
+		return
+	}
+	defer src.Close()
+
+	// s3URL, err := utils.UploadToS3(ctx, file.Filename, src)
+	// if err != nil {
+	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao enviar para S3", "details": err.Error()})
+	// 	return
+	// }
+	s3URL := "mocked-s3-url" // TODO: Replace with actual S3 upload logic or import the correct package
+
 	var f models.FileProcess
-	if err := ctx.ShouldBindJSON(&f); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
-		return
-	}
-	if f.FileName == "" || f.FilePath == "" || f.Status == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Campos obrigatórios faltando"})
-		return
-	}
 	f.ID = uuid.New().String()
+	f.FileName = file.Filename
+	f.FilePath = s3URL
+	f.Status = "recebido"
 	f.ReceivedAt = time.Now()
+
 	if err := c.repo.Create(&f); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao criar registro"})
 		return

@@ -12,11 +12,7 @@ import (
 var Conn *pgx.Conn
 
 func InitDB() {
-	// Tenta carregar o .env, mas não falha se não existir
-	if os.Getenv("RUNNING_IN_DOCKER") != "true" {
-    _ = godotenv.Load()
-}
-
+	_ = godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	if dbURL == "" {
 		log.Fatal("DB_URL não definida")

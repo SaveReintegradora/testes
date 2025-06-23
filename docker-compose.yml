@@ -1,9 +1,8 @@
-version: "3.8"
-
 services:
-  db:
+  books_db:
     image: postgres:16
-    restart: always
+    #container_name: books_db
+    #restart: always
     environment:
       POSTGRES_DB: minha_api_books
       POSTGRES_USER: allan
@@ -11,20 +10,22 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - books_network
 
   api:
     build: .
     depends_on:
-      - db
+      - books_db
+    #container_name: books_api
+    restart: always
     environment:
-      DB_URL: postgres://allan:agripa99@db:5432/minha_api_books?sslmode=disable
-      RUNNING_IN_DOCKER: "true"
+      DB_URL: postgres://allan:agripa99@books_db:5432/minha_api_books?sslmode=disable
     ports:
       - "8080:8080"
-    # Se usar wait-for-it.sh, descomente abaixo:
-    # command: ["/wait-for-it.sh", "db:5432", "--", "./minha-api"]
+    networks:
+      - books_network
 
-volumes:
-  pgdata:
+networks:
+  books_network:

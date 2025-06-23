@@ -30,7 +30,7 @@ func SetupRoutes() *gin.Engine {
 	{
 		files.GET("", fileController.GetAll)
 		files.GET("/:id", fileController.GetByID)
-		files.POST("", fileController.Create)
+		files.POST("sendFiles", fileController.Create)
 		files.PUT("/:id", fileController.Update)
 		files.DELETE("/:id", fileController.Delete)
 	}
