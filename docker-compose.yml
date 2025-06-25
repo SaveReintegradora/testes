@@ -1,8 +1,6 @@
 services:
   books_db:
     image: postgres:16
-    #container_name: books_db
-    #restart: always
     environment:
       POSTGRES_DB: minha_api_books
       POSTGRES_USER: allan
@@ -18,10 +16,12 @@ services:
     build: .
     depends_on:
       - books_db
-    #container_name: books_api
     restart: always
+    env_file:
+      - .env
     environment:
-      DB_URL: postgres://allan:agripa99@books_db:5432/minha_api_books?sslmode=disable
+      - RUNNING_IN_DOCKER=1
+      - DB_URL=postgres://allan:agripa99@books_db:5432/minha_api_books?sslmode=disable
     ports:
       - "8080:8080"
     networks:

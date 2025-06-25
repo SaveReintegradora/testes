@@ -8,6 +8,9 @@ RUN go mod download
 
 COPY . .
 
+# Mostra a versão do Go usada no build (para depuração)
+RUN go version
+
 RUN go build -o minha-api
 
 # Imagem final
