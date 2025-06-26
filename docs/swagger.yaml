@@ -10,6 +10,23 @@ definitions:
       title:
         type: string
     type: object
+  models.FileProcess:
+    properties:
+      error_msg:
+        type: string
+      file_path:
+        type: string
+      fileName:
+        type: string
+      id:
+        type: string
+      received_at:
+        type: string
+      status:
+        description: pendente, em processamento, concluido com erros, concluido sem
+          erros
+        type: string
+    type: object
 info:
   contact: {}
 paths:
@@ -192,4 +209,189 @@ paths:
       summary: Atualiza um livro
       tags:
       - books
+  /files:
+    get:
+      description: Retorna todos os arquivos processados
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.FileProcess'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Lista todos os arquivos
+      tags:
+      - files
+  /files/{id}:
+    delete:
+      description: Remove um arquivo pelo ID
+      parameters:
+      - description: ID do arquivo
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Remove um arquivo
+      tags:
+      - files
+    get:
+      description: Retorna um arquivo específico pelo ID
+      parameters:
+      - description: ID do arquivo
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.FileProcess'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Busca arquivo por ID
+      tags:
+      - files
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de um arquivo existente
+      parameters:
+      - description: ID do arquivo
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados atualizados
+        in: body
+        name: file
+        required: true
+        schema:
+          $ref: '#/definitions/models.FileProcess'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.FileProcess'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Atualiza um arquivo
+      tags:
+      - files
+  /files/sendFiles:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Faz upload de um arquivo e registra no sistema
+      parameters:
+      - description: Arquivo a ser enviado
+        in: formData
+        name: nomeArquivo
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.FileProcess'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Envia arquivo para processamento
+      tags:
+      - files
 swagger: "2.0"

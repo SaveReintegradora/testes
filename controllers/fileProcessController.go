@@ -22,6 +22,15 @@ func NewFileProcessController(repo repositories.FileProcessRepositoryInterface, 
 	return &FileProcessController{repo: repo, s3uploader: uploader}
 }
 
+// GetAll godoc
+// @Summary      Lista todos os arquivos
+// @Description  Retorna todos os arquivos processados
+// @Tags         files
+// @Produce      json
+// @Success      200  {array}   models.FileProcess
+// @Failure      401  {object}  map[string]string
+// @Router       /files [get]
+// @Security     ApiKeyAuth
 func (c *FileProcessController) GetAll(ctx *gin.Context) {
 	files, err := c.repo.GetAll()
 	if err != nil {
@@ -31,6 +40,18 @@ func (c *FileProcessController) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, files)
 }
 
+// GetByID godoc
+// @Summary      Busca arquivo por ID
+// @Description  Retorna um arquivo específico pelo ID
+// @Tags         files
+// @Produce      json
+// @Param        id   path      string  true  "ID do arquivo"
+// @Success      200  {object}  models.FileProcess
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Router       /files/{id} [get]
+// @Security     ApiKeyAuth
 func (c *FileProcessController) GetByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if _, err := uuid.Parse(id); err != nil {
@@ -45,6 +66,19 @@ func (c *FileProcessController) GetByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, file)
 }
 
+// Create godoc
+// @Summary      Envia arquivo para processamento
+// @Description  Faz upload de um arquivo e registra no sistema
+// @Tags         files
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        nomeArquivo formData file true "Arquivo a ser enviado"
+// @Success      201   {object}  models.FileProcess
+// @Failure      400   {object}  map[string]string
+// @Failure      401   {object}  map[string]string
+// @Failure      500   {object}  map[string]string
+// @Router       /files/sendFiles [post]
+// @Security     ApiKeyAuth
 func (c *FileProcessController) Create(ctx *gin.Context) {
 	fmt.Println(">>> Entrou no método Create do controller")
 	file, err := ctx.FormFile("nomeArquivo")
@@ -82,6 +116,20 @@ func (c *FileProcessController) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, f)
 }
 
+// Update godoc
+// @Summary      Atualiza um arquivo
+// @Description  Atualiza os dados de um arquivo existente
+// @Tags         files
+// @Accept       json
+// @Produce      json
+// @Param        id    path      string  true  "ID do arquivo"
+// @Param        file  body      models.FileProcess true  "Dados atualizados"
+// @Success      200   {object}  models.FileProcess
+// @Failure      400   {object}  map[string]string
+// @Failure      404   {object}  map[string]string
+// @Failure      401   {object}  map[string]string
+// @Router       /files/{id} [put]
+// @Security     ApiKeyAuth
 func (c *FileProcessController) Update(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if _, err := uuid.Parse(id); err != nil {
@@ -123,6 +171,17 @@ func (c *FileProcessController) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, existing)
 }
 
+// Delete godoc
+// @Summary      Remove um arquivo
+// @Description  Remove um arquivo pelo ID
+// @Tags         files
+// @Param        id   path      string  true  "ID do arquivo"
+// @Success      204  {string}  string  "No Content"
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Router       /files/{id} [delete]
+// @Security     ApiKeyAuth
 func (c *FileProcessController) Delete(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if _, err := uuid.Parse(id); err != nil {
