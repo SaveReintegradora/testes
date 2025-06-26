@@ -23,7 +23,7 @@ services:
       - RUNNING_IN_DOCKER=1
       - DB_URL=postgres://allan:agripa99@books_db:5432/minha_api_books?sslmode=disable
     ports:
-      - "8080:8080"
+      - "5000:5000" # alterado para alinhar com a porta do servidor Go
     networks:
       - books_network
 

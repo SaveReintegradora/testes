@@ -84,3 +84,11 @@ func (r *FileProcessRepository) Delete(id string) error {
 	}
 	return nil
 }
+
+type FileProcessRepositoryInterface interface {
+	GetAll() ([]models.FileProcess, error)
+	GetByID(id string) (*models.FileProcess, error)
+	Create(f *models.FileProcess) error
+	Update(f *models.FileProcess) error
+	Delete(id string) error
+}

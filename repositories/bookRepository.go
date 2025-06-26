@@ -98,3 +98,11 @@ func (r *BookRepository) Delete(id string) error {
 	}
 	return nil
 }
+
+type BookRepositoryInterface interface {
+	GetAll() ([]models.Book, error)
+	GetByID(id string) (*models.Book, error)
+	Create(book *models.Book) error
+	Update(book *models.Book) error
+	Delete(id string) error
+}

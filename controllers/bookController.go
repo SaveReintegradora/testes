@@ -1,20 +1,21 @@
 package controllers
 
 import (
-	"minha-api/models"
-	"minha-api/repositories"
 	"net/http"
 	"time"
+
+	"minha-api/models"
+	"minha-api/repositories"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type BookController struct {
-	repo *repositories.BookRepository
+	repo repositories.BookRepositoryInterface
 }
 
-func NewBookController(repo *repositories.BookRepository) *BookController {
+func NewBookController(repo repositories.BookRepositoryInterface) *BookController {
 	return &BookController{repo: repo}
 }
 

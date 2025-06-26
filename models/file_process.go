@@ -4,7 +4,7 @@ import "time"
 
 type FileProcess struct {
 	ID         string    `json:"id"`
-	FileName   string    `json:"file_name"`
+	FileName   string    `json:"fileName"`
 	FilePath   string    `json:"file_path"`
 	ReceivedAt time.Time `json:"received_at"`
 	Status     string    `json:"status"` // pendente, em processamento, concluido com erros, concluido sem erros
