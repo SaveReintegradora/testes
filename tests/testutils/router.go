@@ -22,3 +22,7 @@ func SetupRouterWithMocks() *gin.Engine {
 func SetupRouterWithReposAndS3(bookRepo repositories.BookRepositoryInterface, fileRepo repositories.FileProcessRepositoryInterface, s3uploader utils.S3Uploader) *gin.Engine {
 	return routes.SetupRoutesWithReposAndS3(bookRepo, fileRepo, s3uploader)
 }
+
+func GetFileProcessRepositoryMock() *repositories.FileProcessRepositoryMock {
+	return repositories.NewFileProcessRepositoryMock()
+}

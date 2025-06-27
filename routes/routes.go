@@ -34,6 +34,7 @@ func SetupRoutes() *gin.Engine {
 		files.POST("sendFiles", fileController.Create)
 		files.PUT(":id", fileController.Update)
 		files.DELETE(":id", fileController.Delete)
+		files.GET(":id/download", fileController.DownloadFile) // nova rota de download
 	}
 
 	return r
@@ -62,6 +63,7 @@ func SetupRoutesWithReposAndS3(bookRepo repositories.BookRepositoryInterface, fi
 		files.POST("sendFiles", fileController.Create)
 		files.PUT(":id", fileController.Update)
 		files.DELETE(":id", fileController.Delete)
+		files.GET(":id/download", fileController.DownloadFile) // nova rota de download
 	}
 
 	return r

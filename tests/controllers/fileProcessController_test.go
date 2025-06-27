@@ -4,13 +4,18 @@ import (
 	"bytes"
 	"io"
 	"mime/multipart"
+	"minha-api/models"
+	"minha-api/repositories"
+	"minha-api/routes"
+	"minha-api/tests/testutils"
+	"minha-api/utils"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestGetFiles(t *testing.T) {
-	r := setupRouter()
+	r := testutils.SetupRouterWithMocks()
 	req, _ := http.NewRequest("GET", "/files", nil)
 	req.Header.Set("X-API-Key", "minha-chave-secreta")
 	w := httptest.NewRecorder()
@@ -21,7 +26,7 @@ func TestGetFiles(t *testing.T) {
 }
 
 func TestSendFiles(t *testing.T) {
-	r := setupRouter()
+	r := testutils.SetupRouterWithMocks()
 
 	// Cria um buffer multipart para simular upload de arquivo
 	var b bytes.Buffer
@@ -38,4 +43,33 @@ func TestSendFiles(t *testing.T) {
 	req.Header.Set("X-API-Key", "minha-chave-secreta")
 	resp := httptest.NewRecorder()
 	r.ServeHTTP(resp, req)
+}
+
+func TestDownloadFile(t *testing.T) {
+	bookRepo := repositories.NewBookRepositoryMock()
+	fileRepo := repositories.NewFileProcessRepositoryMock()
+	// Garante que o arquivo de teste tem FilePath preenchido e ID válido (UUID)
+	fileRepo.Files["2bce990f-5e9d-40df-8133-6b323fec8cbe"] = models.FileProcess{
+		ID:         "2bce990f-5e9d-40df-8133-6b323fec8cbe",
+		FileName:   "mock.txt",
+		FilePath:   "https://mock-s3.local/mock.txt",
+		Status:     "recebido",
+		ReceivedAt: fileRepo.Files["1"].ReceivedAt, // mantém o timestamp original se existir
+	}
+	s3mock := &utils.MockS3Uploader{}
+	r := routes.SetupRoutesWithReposAndS3(bookRepo, fileRepo, s3mock)
+	fileID := "2bce990f-5e9d-40df-8133-6b323fec8cbe"
+
+	req, _ := http.NewRequest("GET", "/files/"+fileID+"/download", nil)
+	req.Header.Set("X-API-Key", "minha-chave-secreta")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusFound {
+		t.Errorf("Esperado status 302 (redirect), obteve %d", w.Code)
+	}
+	location := w.Header().Get("Location")
+	if location == "" {
+		t.Errorf("Esperado header Location com URL do arquivo, mas veio vazio")
+	}
 }

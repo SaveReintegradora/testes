@@ -11,6 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func init() {
+	gin.SetMode(gin.ReleaseMode)
+}
+
 func setupRouter() *gin.Engine {
 	return testutils.SetupRouterWithMocks()
 }
