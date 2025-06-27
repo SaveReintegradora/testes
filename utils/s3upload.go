@@ -32,13 +32,6 @@ func (r *RealS3Uploader) UploadToS3(ctx context.Context, fileName string, file i
 	accessKey := strings.TrimSpace(os.Getenv("AWS_ACCESS_KEY_ID"))
 	secretKey := strings.TrimSpace(os.Getenv("AWS_SECRET_ACCESS_KEY"))
 
-	fmt.Println("[DEBUG] bucketName:", bucketName)
-	fmt.Println("[DEBUG] endpoint:", endpoint)
-	fmt.Println("[DEBUG] region:", region)
-	fmt.Println("[DEBUG] accessKey:", accessKey)
-	fmt.Println("[DEBUG] secretKey length:", len(secretKey))
-	fmt.Println("[DEBUG] fileName:", fileName)
-
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion(region),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
@@ -72,20 +65,16 @@ func (r *RealS3Uploader) UploadToS3(ctx context.Context, fileName string, file i
 		return "", fmt.Errorf("erro ao ler arquivo: %w", err)
 	}
 
-	fmt.Println("[DEBUG] Iniciando upload para:", bucketName, endpoint)
-
 	_, err = s3Client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: &bucketName,
 		Key:    &fileName,
 		Body:   strings.NewReader(string(fileBytes)),
 	})
 	if err != nil {
-		fmt.Println("[DEBUG] Erro ao enviar arquivo para S3:", err)
 		return "", fmt.Errorf("erro ao enviar arquivo para S3: %w", err)
 	}
 
 	publicURL := fmt.Sprintf("https://%s.%s/%s", bucketName, endpoint, fileName)
-	fmt.Println("[DEBUG] publicURL:", publicURL)
 	return publicURL, nil
 }
 

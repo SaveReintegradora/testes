@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"minha-api/database"
 	_ "minha-api/docs" // ajuste para o nome do seu módulo
@@ -23,7 +22,6 @@ func main() {
 		}
 	}
 
-	fmt.Println("Inicializando a API...")
 	database.InitDB()
 	defer database.CloseDB()
 

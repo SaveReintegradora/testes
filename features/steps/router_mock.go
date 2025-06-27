@@ -1,18 +1,13 @@
 package steps
 
 import (
-	"minha-api/repositories"
-	"minha-api/routes"
-	"minha-api/utils"
-	"net/http"
+	"minha-api/tests/mocks"
 )
 
-var BookRepoMock *repositories.BookRepositoryMock
-var FileRepoMock *repositories.FileProcessRepositoryMock
+var BookRepoMock *mocks.BookRepositoryMock
+var FileRepoMock *mocks.FileProcessRepositoryMock
 
-func setupRouterWithMocks() http.Handler {
-	BookRepoMock = repositories.NewBookRepositoryMock()
-	FileRepoMock = repositories.NewFileProcessRepositoryMock()
-	s3mock := &utils.MockS3Uploader{}
-	return routes.SetupRoutesWithMocks(BookRepoMock, FileRepoMock, s3mock)
+func SetupMocks() {
+	BookRepoMock = mocks.NewBookRepositoryMock()
+	FileRepoMock = mocks.NewFileProcessRepositoryMock()
 }

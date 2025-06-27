@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 
 	"minha-api/models"
+	"minha-api/tests/testutils"
 
 	. "github.com/cucumber/godog"
 	"github.com/google/uuid"
@@ -39,11 +40,9 @@ func (a *apiFeature) iMakeARequestToWithBody(method, path, body string) error {
 	// Substitui 'ultimo' pelo ID real, se necessário
 	if path == "/books/ultimo" {
 		path = "/books/" + a.lastBookID
-		fmt.Printf("[DEBUG] Substituindo /books/ultimo por /books/%s\n", a.lastBookID)
 	}
 	if path == "/files/ultimo" {
 		path = "/files/" + a.lastFileID
-		fmt.Printf("[DEBUG] Substituindo /files/ultimo por /files/%s\n", a.lastFileID)
 	}
 	a.body = bytes.NewBufferString(body)
 	req, err := http.NewRequest(method, path, a.body)
@@ -97,7 +96,7 @@ func (a *apiFeature) theResponseShouldContain(field, value string) error {
 
 func InitializeScenario(ctx *ScenarioContext) {
 	f := &apiFeature{}
-	f.server = setupRouterWithMocks() // Função que retorna o handler com mocks
+	f.server = testutils.SetupRouterWithMocks() // Função que retorna o handler com mocks
 	ctx.Before(func(ctx context.Context, sc *Scenario) (context.Context, error) {
 		f.reset()
 		if BookRepoMock != nil {

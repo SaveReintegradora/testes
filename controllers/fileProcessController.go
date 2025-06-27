@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"minha-api/models"
 	"minha-api/repositories"
 	"minha-api/utils"
@@ -80,7 +79,6 @@ func (c *FileProcessController) GetByID(ctx *gin.Context) {
 // @Router       /files/sendFiles [post]
 // @Security     ApiKeyAuth
 func (c *FileProcessController) Create(ctx *gin.Context) {
-	fmt.Println(">>> Entrou no método Create do controller")
 	file, err := ctx.FormFile("nomeArquivo")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo não enviado ou inválido"})
