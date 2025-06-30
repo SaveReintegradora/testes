@@ -16,7 +16,7 @@ func SetupRoutes() *gin.Engine {
 	controller := controllers.NewBookController(repo)
 
 	fileRepo := repositories.NewFileProcessRepository()
-	fileController := controllers.NewFileProcessController(fileRepo, &utils.RealS3Uploader{})
+	fileController := controllers.NewFileProcessController(fileRepo, &utils.RealS3Uploader{}, &utils.RealS3Presigner{})
 
 	books := r.Group("/books", middlewares.ApiKeyMiddleware())
 	{
@@ -41,11 +41,11 @@ func SetupRoutes() *gin.Engine {
 }
 
 // Ajuste: Remove interfaces indefinidas e usa tipos concretos dos mocks
-func SetupRoutesWithReposAndS3(bookRepo repositories.BookRepositoryInterface, fileRepo repositories.FileProcessRepositoryInterface, s3uploader utils.S3Uploader) *gin.Engine {
+func SetupRoutesWithReposAndS3(bookRepo repositories.BookRepositoryInterface, fileRepo repositories.FileProcessRepositoryInterface, s3uploader utils.S3Uploader, s3presigner utils.S3Presigner) *gin.Engine {
 	r := gin.Default()
 
 	controller := controllers.NewBookController(bookRepo)
-	fileController := controllers.NewFileProcessController(fileRepo, s3uploader)
+	fileController := controllers.NewFileProcessController(fileRepo, s3uploader, s3presigner)
 
 	books := r.Group("/books", middlewares.ApiKeyMiddleware())
 	{
@@ -70,6 +70,6 @@ func SetupRoutesWithReposAndS3(bookRepo repositories.BookRepositoryInterface, fi
 }
 
 // Alias para facilitar uso nos testes BDD
-func SetupRoutesWithMocks(bookRepo repositories.BookRepositoryInterface, fileRepo repositories.FileProcessRepositoryInterface, s3uploader utils.S3Uploader) *gin.Engine {
-	return SetupRoutesWithReposAndS3(bookRepo, fileRepo, s3uploader)
+func SetupRoutesWithMocks(bookRepo repositories.BookRepositoryInterface, fileRepo repositories.FileProcessRepositoryInterface, s3uploader utils.S3Uploader, s3presigner utils.S3Presigner) *gin.Engine {
+	return SetupRoutesWithReposAndS3(bookRepo, fileRepo, s3uploader, s3presigner)
 }

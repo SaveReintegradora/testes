@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -78,12 +79,6 @@ func (r *RealS3Uploader) UploadToS3(ctx context.Context, fileName string, file i
 	return publicURL, nil
 }
 
-// UploadToS3 default aponta para RealS3Uploader (retrocompatibilidade)
-func UploadToS3(ctx context.Context, fileName string, file io.Reader) (string, error) {
-	uploader := &RealS3Uploader{}
-	return uploader.UploadToS3(ctx, fileName, file)
-}
-
 // MockS3Uploader para testes automatizados (não faz upload real)
 type MockS3Uploader struct {
 	LastFileName string
@@ -99,4 +94,52 @@ func (m *MockS3Uploader) UploadToS3(ctx context.Context, fileName string, file i
 		return "", fmt.Errorf("erro simulado no mock S3")
 	}
 	return "https://mock-s3.local/" + fileName, nil
+}
+
+// S3Presigner define interface para geração de link pré-assinado
+// Pode ser implementada por um mock nos testes
+
+type S3Presigner interface {
+	PresignGetObject(ctx context.Context, bucket, key string, expires time.Duration) (string, error)
+}
+
+// RealS3Presigner implementa S3Presigner usando AWS SDK
+// (código real pode ser movido do controller)
+type RealS3Presigner struct{}
+
+func (r *RealS3Presigner) PresignGetObject(ctx context.Context, bucket, key string, expires time.Duration) (string, error) {
+	endpoint := os.Getenv("AWS_ENDPOINT")
+	region := os.Getenv("AWS_REGION")
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	if err != nil {
+		return "", err
+	}
+	customResolver := s3.EndpointResolverFunc(func(region string, options s3.EndpointResolverOptions) (aws.Endpoint, error) {
+		return aws.Endpoint{
+			URL:           "https://" + endpoint,
+			SigningRegion: region,
+		}, nil
+	})
+	httpClient := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.EndpointResolver = customResolver
+		o.UsePathStyle = true
+		o.HTTPClient = httpClient
+	})
+	presignClient := s3.NewPresignClient(s3Client)
+	presignInput := &s3.GetObjectInput{Bucket: aws.String(bucket), Key: aws.String(key)}
+	presignResult, err := presignClient.PresignGetObject(ctx, presignInput, func(opts *s3.PresignOptions) { opts.Expires = expires })
+	if err != nil {
+		return "", err
+	}
+	return presignResult.URL, nil
+}
+
+// MockS3Presigner para testes
+// Retorna sempre uma URL fake
+
+type MockS3Presigner struct{}
+
+func (m *MockS3Presigner) PresignGetObject(ctx context.Context, bucket, key string, expires time.Duration) (string, error) {
+	return "https://mock-s3.local/" + key + "?mock-presigned", nil
 }

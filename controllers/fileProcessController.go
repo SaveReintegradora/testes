@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"context"
-	"crypto/tls"
-	"fmt"
 	"minha-api/models"
 	"minha-api/repositories"
 	"minha-api/utils"
@@ -11,20 +9,18 @@ import (
 	"os"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type FileProcessController struct {
-	repo       repositories.FileProcessRepositoryInterface
-	s3uploader utils.S3Uploader
+	repo        repositories.FileProcessRepositoryInterface
+	s3uploader  utils.S3Uploader
+	s3presigner utils.S3Presigner
 }
 
-func NewFileProcessController(repo repositories.FileProcessRepositoryInterface, uploader utils.S3Uploader) *FileProcessController {
-	return &FileProcessController{repo: repo, s3uploader: uploader}
+func NewFileProcessController(repo repositories.FileProcessRepositoryInterface, uploader utils.S3Uploader, presigner utils.S3Presigner) *FileProcessController {
+	return &FileProcessController{repo: repo, s3uploader: uploader, s3presigner: presigner}
 }
 
 // GetAll godoc
@@ -100,7 +96,6 @@ func (c *FileProcessController) Create(ctx *gin.Context) {
 
 	// Upload direto para S3 usando o utilitário
 	s3URL, err := c.s3uploader.UploadToS3(context.Background(), file.Filename, src)
-	// s3URL, err := c.s3uploader.UploadToS3(context.Background(), file.Filename, src)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao enviar para S3", "details": err.Error()})
 		return
@@ -142,7 +137,6 @@ func (c *FileProcessController) Update(ctx *gin.Context) {
 	}
 	type fileUpdateInput struct {
 		FileName string `json:"fileName"`
-		Name     string `json:"name"`
 		FilePath string `json:"filePath,omitempty"`
 		Status   string `json:"status,omitempty"`
 	}
@@ -150,9 +144,6 @@ func (c *FileProcessController) Update(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
 		return
-	}
-	if input.FileName == "" && input.Name != "" {
-		input.FileName = input.Name
 	}
 	existing, err := c.repo.GetByID(id)
 	if err != nil {
@@ -230,52 +221,13 @@ func (c *FileProcessController) DownloadFile(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Arquivo sem URL de download"})
 		return
 	}
-
 	bucket := os.Getenv("AWS_BUCKET_NAME")
-	key := file.FileName // ajuste se salvar em subpastas
-	endpoint := os.Getenv("AWS_ENDPOINT")
-	region := os.Getenv("AWS_REGION")
-
-	cfg, err := config.LoadDefaultConfig(context.Background(),
-		config.WithRegion(region),
-	)
+	key := file.FileName
+	url, err := c.s3presigner.PresignGetObject(ctx, bucket, key, 15*time.Minute)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao carregar config AWS"})
-		return
-	}
-
-	customResolver := s3.EndpointResolverFunc(func(region string, options s3.EndpointResolverOptions) (aws.Endpoint, error) {
-		return aws.Endpoint{
-			URL:           "https://" + endpoint,
-			SigningRegion: region,
-		}, nil
-	})
-
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-
-	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.EndpointResolver = customResolver
-		o.UsePathStyle = true     // Necessário para Wasabi/MinIO
-		o.HTTPClient = httpClient // Ignora verificação de certificado
-	})
-
-	presignClient := s3.NewPresignClient(s3Client)
-	presignInput := &s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	}
-	presignResult, err := presignClient.PresignGetObject(context.Background(), presignInput, func(opts *s3.PresignOptions) {
-		opts.Expires = 15 * time.Minute // Link válido por 15 minutos
-	})
-	if err != nil {
-		fmt.Println("Erro ao gerar URL pré-assinada:", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao gerar link de download"})
 		return
 	}
-
-	ctx.JSON(http.StatusOK, gin.H{"download_url": presignResult.URL})
+	ctx.Header("Location", url)
+	ctx.Status(http.StatusFound)
 }
