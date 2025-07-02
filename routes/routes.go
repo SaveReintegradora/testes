@@ -18,6 +18,9 @@ func SetupRoutes() *gin.Engine {
 	fileRepo := repositories.NewFileProcessRepository()
 	fileController := controllers.NewFileProcessController(fileRepo, &utils.RealS3Uploader{}, &utils.RealS3Presigner{})
 
+	clientRepo := repositories.NewClientRepository()
+	clientController := controllers.NewClientController(clientRepo)
+
 	books := r.Group("/books", middlewares.ApiKeyMiddleware())
 	{
 		books.GET("", controller.GetBooks)
@@ -36,6 +39,8 @@ func SetupRoutes() *gin.Engine {
 		files.DELETE(":id", fileController.Delete)
 		files.GET(":id/download", fileController.DownloadFile) // nova rota de download
 	}
+
+	r.POST("/clients/upload", clientController.UploadClients) // novo endpoint para upload de clientes
 
 	return r
 }

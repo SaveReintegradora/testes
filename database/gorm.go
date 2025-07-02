@@ -21,7 +21,7 @@ func InitGorm() {
 	DB = db
 
 	// Migração automática das tabelas
-	err = DB.AutoMigrate(&models.Book{}, &models.FileProcess{})
+	err = DB.AutoMigrate(&models.Book{}, &models.FileProcess{}, &models.Client{})
 	if err != nil {
 		log.Fatalf("Erro ao migrar tabelas: %v", err)
 	}
