@@ -16,7 +16,7 @@ func init() {
 	fileRepo := &mocks.FileProcessRepositoryMock{Files: map[string]models.FileProcess{}}
 	s3mock := &utils.MockS3Uploader{}
 	bookController := controllers.NewBookController(bookRepo)
-	fileController := controllers.NewFileProcessController(fileRepo, s3mock)
+	fileController := controllers.NewFileProcessController(fileRepo, s3mock, &utils.MockS3Presigner{})
 
 	r = gin.Default()
 	r.GET("/books", bookController.GetBooks)

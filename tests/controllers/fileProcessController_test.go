@@ -57,7 +57,8 @@ func TestDownloadFile(t *testing.T) {
 		ReceivedAt: fileRepo.Files["1"].ReceivedAt, // mantém o timestamp original se existir
 	}
 	s3mock := &utils.MockS3Uploader{}
-	r := routes.SetupRoutesWithReposAndS3(bookRepo, fileRepo, s3mock)
+	s3presign := &utils.MockS3Presigner{}
+	r := routes.SetupRoutesWithReposAndS3(bookRepo, fileRepo, s3mock, s3presign)
 	fileID := "2bce990f-5e9d-40df-8133-6b323fec8cbe"
 
 	req, _ := http.NewRequest("GET", "/files/"+fileID+"/download", nil)
