@@ -21,6 +21,20 @@ func (r *ClientRepository) GetAll() ([]models.Client, error) {
 	return clients, err
 }
 
+func (r *ClientRepository) GetByID(id string) (models.Client, error) {
+	var client models.Client
+	err := database.DB.First(&client, "id = ?", id).Error
+	return client, err
+}
+
+func (r *ClientRepository) Update(client *models.Client) error {
+	return database.DB.Model(&models.Client{}).Where("id = ?", client.ID).Updates(client).Error
+}
+
+func (r *ClientRepository) Delete(id string) error {
+	return database.DB.Delete(&models.Client{}, "id = ?", id).Error
+}
+
 func (r *ClientRepository) ExistsByNameAndCPF(name, cpf string) (bool, error) {
 	var count int64
 	type Result struct {

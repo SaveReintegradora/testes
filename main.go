@@ -22,7 +22,7 @@ func main() {
 		}
 	}
 
-	database.InitGorm() // Inicializa o GORM e faz migração automática
+	database.ConnectDatabase() // Use apenas ConnectDatabase()
 
 	r := routes.SetupRoutes()
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

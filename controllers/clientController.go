@@ -131,7 +131,7 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 		}
 	}
 
-	var count, ignored int
+	var count, ignored, dbErrors int
 	for i, row := range rows {
 		if i == 0 {
 			continue // pula header
@@ -160,7 +160,7 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 				cnpj = row[idx]
 			}
 		}
-		fmt.Printf("Linha %d: nome='%s', cnpj='%s', email='%s', telefone='%s', endereco='%s'\n", i, name, cnpj, email, phone, address)
+		fmt.Printf("[DEBUG] Linha %d: nome='%s', cnpj='%s', email='%s', telefone='%s', endereco='%s'\n", i, name, cnpj, email, phone, address)
 		// Validação: não cadastrar cliente duplicado
 		var exists bool
 		if cnpj != "" {
@@ -169,9 +169,9 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 			exists, err = c.repo.ExistsByNameAndEmail(name, email)
 		}
 		if err != nil {
-			// Apenas loga erro real de banco, não duplicidade
 			if !strings.Contains(err.Error(), "record not found") {
-				fmt.Println("[ERRO] Erro ao verificar duplicidade:", err)
+				fmt.Printf("[ERRO] Falha ao verificar duplicidade (linha %d): %v\n", i, err)
+				dbErrors++
 			}
 			continue
 		}
@@ -190,10 +190,17 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 		}
 		if err := c.repo.Create(&client); err == nil {
 			count++
+		} else {
+			fmt.Printf("[ERRO] Falha ao inserir cliente (linha %d): %v\n", i, err)
+			dbErrors++
 		}
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"clientes importados": count, "ignorados por duplicidade": ignored})
+	ctx.JSON(http.StatusCreated, gin.H{
+		"clientes importados": count,
+		"ignorados por duplicidade": ignored,
+		"erros de banco": dbErrors,
+	})
 }
 
 func normalizeHeader(s string) string {

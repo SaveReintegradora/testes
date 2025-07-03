@@ -10,6 +10,21 @@ definitions:
       title:
         type: string
     type: object
+  models.Client:
+    properties:
+      address:
+        type: string
+      cnpj:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
   models.FileProcess:
     properties:
       error_msg:
@@ -209,6 +224,171 @@ paths:
       summary: Atualiza um livro
       tags:
       - books
+  /clients:
+    get:
+      description: Retorna todos os clientes cadastrados
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Client'
+            type: array
+      summary: Lista todos os clientes
+      tags:
+      - clients
+    post:
+      consumes:
+      - application/json
+      description: Cria um cliente a partir de um JSON
+      parameters:
+      - description: Dados do cliente
+        in: body
+        name: client
+        required: true
+        schema:
+          $ref: '#/definitions/models.Client'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Client'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Cria um novo cliente
+      tags:
+      - clients
+  /clients/{id}:
+    delete:
+      description: Remove um cliente pelo ID
+      parameters:
+      - description: ID do cliente
+        in: path
+        name: id
+        required: true
+        type: string
+        example: b3e1c2d0-1234-4abc-9def-1234567890ab
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+    get:
+      description: Retorna um cliente pelo ID
+      parameters:
+      - description: ID do cliente
+        in: path
+        name: id
+        required: true
+        type: string
+        example: b3e1c2d0-1234-4abc-9def-1234567890ab
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Client'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Busca cliente por ID
+      tags:
+      - clients
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de um cliente pelo ID
+      parameters:
+      - description: ID do cliente
+        in: path
+        name: id
+        required: true
+        type: string
+        example: b3e1c2d0-1234-4abc-9def-1234567890ab
+      - description: Dados do cliente
+        in: body
+        name: client
+        required: true
+        schema:
+          $ref: '#/definitions/models.Client'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Client'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Atualiza um cliente
+      tags:
+      - clients
+  /clients/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Recebe um arquivo .xls, lê os dados e cadastra clientes no banco
+      parameters:
+      - description: Arquivo de clientes (.xls)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Upload de clientes via arquivo Excel
+      tags:
+      - clients
   /files:
     get:
       description: Retorna todos os arquivos processados

@@ -21,6 +21,8 @@ func SetupRoutes() *gin.Engine {
 	clientRepo := repositories.NewClientRepository()
 	clientController := controllers.NewClientController(clientRepo)
 
+	clientCRUDController := controllers.NewClientCRUDController(clientRepo)
+
 	books := r.Group("/books", middlewares.ApiKeyMiddleware())
 	{
 		books.GET("", controller.GetBooks)
@@ -41,6 +43,12 @@ func SetupRoutes() *gin.Engine {
 	}
 
 	r.POST("/clients/upload", clientController.UploadClients) // novo endpoint para upload de clientes
+
+	r.GET("/clients", clientCRUDController.GetAll)
+	r.GET("/clients/:id", clientCRUDController.GetByID)
+	r.POST("/clients", clientCRUDController.Create)
+	r.PUT("/clients/:id", clientCRUDController.Update)
+	r.DELETE("/clients/:id", clientCRUDController.Delete)
 
 	return r
 }

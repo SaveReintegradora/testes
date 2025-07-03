@@ -9,11 +9,14 @@ import (
 	"gorm.io/gorm"
 )
 
+var DB *gorm.DB
+
 func ConnectDatabase() {
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("DB_URL")
 	if dsn == "" {
-		dsn = "host=books_db user=allan dbname=minha_api_books sslmode=disable password=allan"
+		dsn = "postgres://allan:agripa99@books_db:5432/minha_api_books?sslmode=disable"
 	}
+	fmt.Println("[INFO] DSN utilizado para conexão:", dsn)
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
