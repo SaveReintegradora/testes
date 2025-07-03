@@ -22,6 +22,7 @@ func SetupRoutes() *gin.Engine {
 	clientController := controllers.NewClientController(clientRepo)
 
 	clientCRUDController := controllers.NewClientCRUDController(clientRepo)
+	clientExportController := controllers.NewClientExportController(clientRepo, &utils.RealS3Uploader{}, &utils.RealS3Presigner{})
 
 	books := r.Group("/books", middlewares.ApiKeyMiddleware())
 	{
@@ -49,6 +50,7 @@ func SetupRoutes() *gin.Engine {
 	r.POST("/clients", clientCRUDController.Create)
 	r.PUT("/clients/:id", clientCRUDController.Update)
 	r.DELETE("/clients/:id", clientCRUDController.Delete)
+	r.GET("/clients/export", clientExportController.ExportClients) // nova rota para exportação de clientes
 
 	return r
 }

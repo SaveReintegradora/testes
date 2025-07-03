@@ -197,9 +197,9 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{
-		"clientes importados": count,
+		"clientes importados":       count,
 		"ignorados por duplicidade": ignored,
-		"erros de banco": dbErrors,
+		"erros de banco":            dbErrors,
 	})
 }
 
