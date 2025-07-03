@@ -112,7 +112,7 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 		fmt.Printf("Coluna original: '%s' | Normalizada: '%s'\n", col, normCol)
 		if normCol == "nome" {
 			colMap["nome"] = idx
-		} else if normCol == "email" || normCol == "email" {
+		} else if normCol == "email" {
 			colMap["email"] = idx
 		} else if normCol == "telefone" {
 			colMap["telefone"] = idx
