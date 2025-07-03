@@ -8,5 +8,6 @@ type Client struct {
 	Email     string         `json:"email"`
 	Phone     string         `json:"phone"`
 	Address   string         `json:"address"`
+	CNPJ      string         `json:"cnpj"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }

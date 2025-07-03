@@ -14,6 +14,9 @@ var DB *gorm.DB
 
 func InitGorm() {
 	dsn := os.Getenv("DB_URL")
+	if dsn == "" {
+		dsn = "host=books_db user=allan dbname=minha_api_books sslmode=disable password=agripa99"
+	}
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Erro ao conectar no banco com GORM: %v", err)
