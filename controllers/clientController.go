@@ -67,11 +67,19 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao abrir arquivo Excel"})
 			return
 		}
-		sheet := xl.GetSheetName(0)
-		rows, err = xl.GetRows(sheet)
-		if err != nil {
-			fmt.Println("[ERRO] Erro ao ler linhas do Excel:", err)
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao ler linhas do Excel"})
+		// Busca a primeira aba não vazia
+		sheetName := ""
+		for _, name := range xl.GetSheetList() {
+			rowsTmp, _ := xl.GetRows(name)
+			if len(rowsTmp) > 0 {
+				sheetName = name
+				rows = rowsTmp
+				break
+			}
+		}
+		if sheetName == "" || len(rows) == 0 {
+			fmt.Println("[ERRO] Nenhuma aba com dados encontrada no Excel")
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo Excel vazio ou sem dados válidos"})
 			return
 		}
 	} else {
@@ -118,7 +126,9 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 			colMap["telefone"] = idx
 		} else if normCol == "endereco" {
 			colMap["endereco"] = idx
-		}
+		} else if normCol == "cnpj" {
+			colMap["cnpj"] = idx
+		} // ignora qualquer outra coluna (ex: id)
 	}
 	fmt.Println("Mapeamento de colunas:", colMap)
 	// Verifica se todos os campos obrigatórios existem
@@ -142,17 +152,20 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 		phone := ""
 		address := ""
 		cnpj := ""
-		if colMap["nome"] < len(row) {
-			name = row[colMap["nome"]]
+		if idx, ok := colMap["nome"]; ok && idx < len(row) {
+			name = row[idx]
 		}
-		if colMap["email"] < len(row) {
-			email = row[colMap["email"]]
+		if idx, ok := colMap["email"]; ok && idx < len(row) {
+			email = row[idx]
 		}
-		if colMap["telefone"] < len(row) {
-			phone = row[colMap["telefone"]]
+		if idx, ok := colMap["telefone"]; ok && idx < len(row) {
+			phone = row[idx]
 		}
-		if colMap["endereco"] < len(row) {
-			address = row[colMap["endereco"]]
+		if idx, ok := colMap["endereco"]; ok && idx < len(row) {
+			address = row[idx]
+		}
+		if idx, ok := colMap["cnpj"]; ok && idx < len(row) {
+			cnpj = row[idx]
 		}
 		// Tenta pegar CNPJ se existir na planilha
 		for idx, col := range header {
