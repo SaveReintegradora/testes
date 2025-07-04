@@ -38,6 +38,7 @@ func (c *ClientExportController) ExportClients(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar clientes"})
 		return
 	}
+	fmt.Printf("[EXPORT] Quantidade de clientes encontrados: %d\n", len(clients))
 
 	xl := excelize.NewFile()
 	sheet := "Clientes"
