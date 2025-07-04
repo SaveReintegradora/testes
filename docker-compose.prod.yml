@@ -11,6 +11,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U allan -d minha_api_books"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   api:
     image: arcanjus3/minha-api:latest

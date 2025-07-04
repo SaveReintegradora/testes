@@ -11,11 +11,17 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - books_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U allan -d minha_api_books"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   api:
     build: .
     depends_on:
-      - books_db
+      books_db:
+        condition: service_healthy
     restart: always
     env_file:
       - .env

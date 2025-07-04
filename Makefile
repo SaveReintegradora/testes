@@ -9,3 +9,8 @@ clean:
 
 rebuild:
 	docker compose -f docker-compose.yml up -d --build --force-recreate --no-deps api
+
+total:
+	docker-compose down -v
+	docker system prune -af
+	docker-compose up --build
