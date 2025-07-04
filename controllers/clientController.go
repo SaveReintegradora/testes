@@ -12,9 +12,12 @@ import (
 
 	"github.com/extrame/xls"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/xuri/excelize/v2"
 )
+
+var validate = validator.New()
 
 type ClientController struct {
 	repo *repositories.ClientRepository
@@ -37,7 +40,6 @@ func NewClientController(repo *repositories.ClientRepository) *ClientController 
 func (c *ClientController) UploadClients(ctx *gin.Context) {
 	file, err := ctx.FormFile("file")
 	if err != nil {
-		fmt.Println("[ERRO] Arquivo não enviado:", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo não enviado"})
 		return
 	}
@@ -46,14 +48,12 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 	// Verifica extensão
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if ext != ".xls" && ext != ".xlsx" {
-		fmt.Println("[ERRO] Extensão inválida:", ext)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "O arquivo deve ser .xls ou .xlsx"})
 		return
 	}
 
 	tempPath := "/tmp/" + uuid.New().String() + ext
 	if err := ctx.SaveUploadedFile(file, tempPath); err != nil {
-		fmt.Println("[ERRO] Erro ao salvar arquivo temporário:", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao salvar arquivo temporário"})
 		return
 	}
@@ -63,7 +63,6 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 	if ext == ".xlsx" {
 		xl, err := excelize.OpenFile(tempPath)
 		if err != nil {
-			fmt.Println("[ERRO] Erro ao abrir arquivo Excel:", err)
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao abrir arquivo Excel"})
 			return
 		}
@@ -78,20 +77,17 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 			}
 		}
 		if sheetName == "" || len(rows) == 0 {
-			fmt.Println("[ERRO] Nenhuma aba com dados encontrada no Excel")
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo Excel vazio ou sem dados válidos"})
 			return
 		}
 	} else {
 		xlsFile, err := xls.Open(tempPath, "utf-8")
 		if err != nil {
-			fmt.Println("[ERRO] Erro ao abrir arquivo XLS:", err)
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao abrir arquivo XLS"})
 			return
 		}
 		sheet := xlsFile.GetSheet(0)
 		if sheet == nil {
-			fmt.Println("[ERRO] Não foi possível ler a primeira planilha do XLS")
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Não foi possível ler a primeira planilha do XLS"})
 			return
 		}
@@ -106,7 +102,6 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 	}
 
 	if len(rows) == 0 {
-		fmt.Println("[ERRO] Arquivo Excel vazio")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo Excel vazio"})
 		return
 	}
@@ -135,7 +130,6 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 	required := []string{"nome", "email", "telefone", "endereco"}
 	for _, req := range required {
 		if _, ok := colMap[req]; !ok {
-			fmt.Println("[ERRO] Cabeçalho faltando campo obrigatório:", req)
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Cabeçalho do arquivo deve conter as colunas: Nome, Email, Telefone, Endereço (em qualquer ordem)"})
 			return
 		}
@@ -180,14 +174,10 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 			exists, err = c.repo.ExistsByNameAndEmail(name, email)
 		}
 		if err != nil {
-			if !strings.Contains(err.Error(), "record not found") {
-				fmt.Printf("[ERRO] Falha ao verificar duplicidade (linha %d): %v\n", i, err)
-				dbErrors++
-			}
+			dbErrors++
 			continue
 		}
 		if exists {
-			fmt.Printf("[INFO] Cliente duplicado ignorado: nome='%s', cnpj='%s'\n", name, cnpj)
 			ignored++
 			continue
 		}
@@ -199,22 +189,23 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 			Address: address,
 			CNPJ:    cnpj,
 		}
+		// Validação robusta dos campos
+		err := validate.StructPartial(client, "Name", "Email", "Phone", "Address")
+		if err != nil {
+			dbErrors++
+			continue
+		}
 		if err := c.repo.Create(&client); err == nil {
-			fmt.Printf("[IMPORT] Cliente salvo: nome='%s', email='%s'\n", name, email)
 			count++
 		} else {
-			// Trata erro de duplicidade do banco (unique violation)
 			errMsg := strings.ToLower(err.Error())
 			if strings.Contains(errMsg, "duplicate") || strings.Contains(errMsg, "unique") {
-				fmt.Printf("[INFO] Cliente duplicado ignorado pelo banco: nome='%s', cnpj='%s', email='%s'\n", name, cnpj, email)
 				ignored++
 			} else {
-				fmt.Printf("[ERRO] Falha ao inserir cliente (linha %d): %v\n", i, err)
 				dbErrors++
 			}
 		}
 	}
-
 	ctx.JSON(http.StatusCreated, gin.H{
 		"clientes importados":       count,
 		"ignorados por duplicidade": ignored,

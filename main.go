@@ -26,5 +26,14 @@ func main() {
 
 	r := routes.SetupRoutes()
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	r.Run(":5000") // Inicia o servidor na porta padrão 5000
+
+	certFile := os.Getenv("SSL_CERT_FILE")
+	keyFile := os.Getenv("SSL_KEY_FILE")
+	if certFile != "" && keyFile != "" {
+		// HTTPS ativado
+		r.RunTLS(":5000", certFile, keyFile)
+	} else {
+		// HTTP padrão
+		r.Run(":5000")
+	}
 }

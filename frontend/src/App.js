@@ -1,5 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+// Exemplo de função para consumir CRUD de clientes com API Key
+// Pode ser movido para src/api.js
+export async function getClients(API_URL, API_KEY) {
+  const response = await fetch(`${API_URL}/clients`, {
+    headers: { 'x-api-key': API_KEY }
+  });
+  if (!response.ok) throw new Error('Erro ao buscar clientes');
+  return response.json();
+}
 
 function App() {
   const [file, setFile] = useState(null);
@@ -9,6 +19,11 @@ function App() {
   const [exportStatus, setExportStatus] = useState("");
   const [exportError, setExportError] = useState("");
   const [duplicados, setDuplicados] = useState(0);
+  const fileInputRef = useRef();
+
+  // Use variável de ambiente para a URL da API
+  const API_URL = process.env.REACT_APP_API_URL || "http://api:5000";
+  const API_KEY = process.env.REACT_APP_API_KEY || "SUA_API_KEY_AQUI"; // Defina no .env
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -29,9 +44,12 @@ function App() {
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:5000/clients/upload", {
+      const response = await fetch(`${API_URL}/clients/upload`, {
         method: "POST",
         body: formData,
+        headers: {
+          'x-api-key': API_KEY
+        },
       });
       const data = await response.json();
       if (!response.ok) {
@@ -48,6 +66,8 @@ function App() {
         msg += ` | Erros de banco: ${data["erros de banco"]}`;
       }
       setUploadStatus(msg);
+      setFile(null); // Limpa o estado do arquivo
+      if (fileInputRef.current) fileInputRef.current.value = ""; // Limpa input
     } catch (err) {
       setUploadError(err.message);
       setUploadStatus("");
@@ -60,7 +80,11 @@ function App() {
     setExportError("");
     setDownloadUrl("");
     try {
-      const response = await fetch("http://localhost:5000/clients/export");
+      const response = await fetch(`${API_URL}/clients/export`, {
+        headers: {
+          'x-api-key': API_KEY
+        }
+      });
       if (!response.ok) throw new Error("Erro ao exportar clientes");
       const data = await response.json();
       setDownloadUrl(data.download_url);
@@ -90,6 +114,7 @@ function App() {
                     className="form-control"
                     accept=".xls,.xlsx"
                     onChange={handleFileChange}
+                    ref={fileInputRef}
                   />
                   <button className="btn btn-primary" type="submit">
                     Enviar
@@ -131,5 +156,13 @@ function App() {
     </div>
   );
 }
+
+// Sugestão: crie um arquivo src/api.js para centralizar chamadas de API
+// Exemplo:
+// export async function uploadClients(file) { ... }
+// export async function exportClients() { ... }
+// Isso facilita testes e manutenção.
+
+// Sugestão: crie testes com Jest/React Testing Library para upload/exportação e feedback visual.
 
 export default App;

@@ -13,7 +13,17 @@ import (
 func SetupRoutes() *gin.Engine {
 	r := gin.Default()
 
-	r.Use(cors.Default())
+	r.Use(middlewares.RateLimitMiddleware()) // Rate limiting global
+
+	// CORS customizado para permitir x-api-key
+	corsConfig := cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "x-api-key"},
+		ExposeHeaders:    []string{"Content-Disposition"},
+		AllowCredentials: false,
+	}
+	r.Use(cors.New(corsConfig))
 
 	repo := repositories.NewBookRepository()
 	controller := controllers.NewBookController(repo)
@@ -46,22 +56,25 @@ func SetupRoutes() *gin.Engine {
 		files.GET(":id/download", fileController.DownloadFile) // nova rota de download
 	}
 
-	r.POST("/clients/upload", clientController.UploadClients) // novo endpoint para upload de clientes
-
-	r.GET("/clients", clientCRUDController.GetAll)
-	r.GET("/clients/:id", clientCRUDController.GetByID)
-	r.POST("/clients", clientCRUDController.Create)
-	r.PUT("/clients/:id", clientCRUDController.Update)
-	r.DELETE("/clients/:id", clientCRUDController.Delete)
-	r.GET("/clients/export", clientExportController.ExportClients) // nova rota para exportação de clientes
-	r.GET("/clients/list", func(ctx *gin.Context) {
-		clients, err := clientRepo.GetAll()
-		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		ctx.JSON(200, clients)
-	}) // endpoint temporário para listar todos os clientes
+	// Protege todas as rotas de clientes com API Key
+	clients := r.Group("/clients", middlewares.ApiKeyMiddleware())
+	{
+		clients.POST("/upload", clientController.UploadClients) // upload de clientes
+		clients.GET("", clientCRUDController.GetAll)
+		clients.GET(":id", clientCRUDController.GetByID)
+		clients.POST("", clientCRUDController.Create)
+		clients.PUT(":id", clientCRUDController.Update)
+		clients.DELETE(":id", clientCRUDController.Delete)
+		clients.GET("/export", clientExportController.ExportClients) // exportação de clientes
+		clients.GET("/list", func(ctx *gin.Context) {
+			clients, err := clientRepo.GetAll()
+			if err != nil {
+				ctx.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			ctx.JSON(200, clients)
+		}) // endpoint temporário para listar todos os clientes
+	}
 
 	return r
 }
@@ -70,10 +83,26 @@ func SetupRoutes() *gin.Engine {
 func SetupRoutesWithReposAndS3(bookRepo repositories.BookRepositoryInterface, fileRepo repositories.FileProcessRepositoryInterface, s3uploader utils.S3Uploader, s3presigner utils.S3Presigner) *gin.Engine {
 	r := gin.Default()
 
-	r.Use(cors.Default())
+	r.Use(middlewares.RateLimitMiddleware()) // Rate limiting global
+
+	// CORS customizado para permitir x-api-key
+	corsConfig := cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "x-api-key"},
+		ExposeHeaders:    []string{"Content-Disposition"},
+		AllowCredentials: false,
+	}
+	r.Use(cors.New(corsConfig))
 
 	controller := controllers.NewBookController(bookRepo)
 	fileController := controllers.NewFileProcessController(fileRepo, s3uploader, s3presigner)
+
+	// Adiciona instâncias de repositório e controllers de clientes
+	clientRepo := repositories.NewClientRepository()
+	clientController := controllers.NewClientController(clientRepo)
+	clientCRUDController := controllers.NewClientCRUDController(clientRepo)
+	clientExportController := controllers.NewClientExportController(clientRepo, s3uploader, s3presigner)
 
 	books := r.Group("/books", middlewares.ApiKeyMiddleware())
 	{
@@ -92,6 +121,26 @@ func SetupRoutesWithReposAndS3(bookRepo repositories.BookRepositoryInterface, fi
 		files.PUT(":id", fileController.Update)
 		files.DELETE(":id", fileController.Delete)
 		files.GET(":id/download", fileController.DownloadFile) // nova rota de download
+	}
+
+	// Protege todas as rotas de clientes com API Key
+	clients := r.Group("/clients", middlewares.ApiKeyMiddleware())
+	{
+		clients.POST("/upload", clientController.UploadClients) // upload de clientes
+		clients.GET("", clientCRUDController.GetAll)
+		clients.GET(":id", clientCRUDController.GetByID)
+		clients.POST("", clientCRUDController.Create)
+		clients.PUT(":id", clientCRUDController.Update)
+		clients.DELETE(":id", clientCRUDController.Delete)
+		clients.GET("/export", clientExportController.ExportClients) // exportação de clientes
+		clients.GET("/list", func(ctx *gin.Context) {
+			clients, err := clientRepo.GetAll()
+			if err != nil {
+				ctx.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			ctx.JSON(200, clients)
+		}) // endpoint temporário para listar todos os clientes
 	}
 
 	return r
