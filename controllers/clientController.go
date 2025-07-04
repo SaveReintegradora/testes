@@ -161,6 +161,10 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 			}
 		}
 		fmt.Printf("[DEBUG] Linha %d: nome='%s', cnpj='%s', email='%s', telefone='%s', endereco='%s'\n", i, name, cnpj, email, phone, address)
+		// Normaliza campos para evitar duplicidade por diferença de maiúsculas/minúsculas/espacos
+		name = strings.TrimSpace(strings.ToLower(name))
+		email = strings.TrimSpace(strings.ToLower(email))
+		cnpj = strings.TrimSpace(strings.ToLower(cnpj))
 		// Validação: não cadastrar cliente duplicado
 		var exists bool
 		if cnpj != "" {
@@ -191,8 +195,15 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 		if err := c.repo.Create(&client); err == nil {
 			count++
 		} else {
-			fmt.Printf("[ERRO] Falha ao inserir cliente (linha %d): %v\n", i, err)
-			dbErrors++
+			// Trata erro de duplicidade do banco (unique violation)
+			errMsg := strings.ToLower(err.Error())
+			if strings.Contains(errMsg, "duplicate") || strings.Contains(errMsg, "unique") {
+				fmt.Printf("[INFO] Cliente duplicado ignorado pelo banco: nome='%s', cnpj='%s', email='%s'\n", name, cnpj, email)
+				ignored++
+			} else {
+				fmt.Printf("[ERRO] Falha ao inserir cliente (linha %d): %v\n", i, err)
+				dbErrors++
+			}
 		}
 	}
 

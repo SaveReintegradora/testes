@@ -49,14 +49,14 @@ func (r *ClientRepository) ExistsByNameAndCPF(name, cpf string) (bool, error) {
 
 func (r *ClientRepository) ExistsByNameAndCNPJ(name, cnpj string) (bool, error) {
 	var count int64
-	db := database.DB.Table("clients").Where("name = ? AND cnpj = ?", name, cnpj)
+	db := database.DB.Table("clients").Where("LOWER(TRIM(name)) = ? AND LOWER(TRIM(cnpj)) = ?", name, cnpj)
 	db.Count(&count)
 	return count > 0, db.Error
 }
 
 func (r *ClientRepository) ExistsByNameAndEmail(name, email string) (bool, error) {
 	var count int64
-	db := database.DB.Table("clients").Where("name = ? AND email = ?", name, email)
+	db := database.DB.Table("clients").Where("LOWER(TRIM(name)) = ? AND LOWER(TRIM(email)) = ?", name, email)
 	db.Count(&count)
 	return count > 0, db.Error
 }

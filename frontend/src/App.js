@@ -8,6 +8,7 @@ function App() {
   const [downloadUrl, setDownloadUrl] = useState("");
   const [exportStatus, setExportStatus] = useState("");
   const [exportError, setExportError] = useState("");
+  const [duplicados, setDuplicados] = useState(0);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -23,6 +24,7 @@ function App() {
     }
     setUploadStatus("Enviando...");
     setUploadError("");
+    setDuplicados(0);
     const formData = new FormData();
     formData.append("file", file);
 
@@ -31,14 +33,25 @@ function App() {
         method: "POST",
         body: formData,
       });
+      const data = await response.json();
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.error || "Erro ao enviar arquivo");
       }
-      setUploadStatus("Arquivo enviado com sucesso!");
+      let msg = `Clientes importados: ${data["clientes importados"]}`;
+      if (data["ignorados por duplicidade"]) {
+        setDuplicados(data["ignorados por duplicidade"]);
+        msg += ` | Duplicados ignorados: ${data["ignorados por duplicidade"]}`;
+      } else {
+        setDuplicados(0);
+      }
+      if (data["erros de banco"]) {
+        msg += ` | Erros de banco: ${data["erros de banco"]}`;
+      }
+      setUploadStatus(msg);
     } catch (err) {
       setUploadError(err.message);
       setUploadStatus("");
+      setDuplicados(0);
     }
   };
 
@@ -84,6 +97,9 @@ function App() {
                 </div>
               </form>
               {uploadStatus && <div className="alert alert-success">{uploadStatus}</div>}
+              {duplicados > 0 && (
+                <div className="alert alert-warning">{`Atenção: ${duplicados} cliente(s) já existiam e foram ignorados.`}</div>
+              )}
               {uploadError && <div className="alert alert-danger">{uploadError}</div>}
             </div>
           </div>
