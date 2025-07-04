@@ -167,13 +167,7 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 		if idx, ok := colMap["cnpj"]; ok && idx < len(row) {
 			cnpj = row[idx]
 		}
-		// Tenta pegar CNPJ se existir na planilha
-		for idx, col := range header {
-			if normalizeHeader(col) == "cnpj" && idx < len(row) {
-				cnpj = row[idx]
-			}
-		}
-		fmt.Printf("[DEBUG] Linha %d: nome='%s', cnpj='%s', email='%s', telefone='%s', endereco='%s'\n", i, name, cnpj, email, phone, address)
+		fmt.Printf("[IMPORT] Linha %d: nome='%s', email='%s', telefone='%s', endereco='%s', cnpj='%s'\n", i, name, email, phone, address, cnpj)
 		// Normaliza campos para evitar duplicidade por diferença de maiúsculas/minúsculas/espacos
 		name = strings.TrimSpace(strings.ToLower(name))
 		email = strings.TrimSpace(strings.ToLower(email))
@@ -206,6 +200,7 @@ func (c *ClientController) UploadClients(ctx *gin.Context) {
 			CNPJ:    cnpj,
 		}
 		if err := c.repo.Create(&client); err == nil {
+			fmt.Printf("[IMPORT] Cliente salvo: nome='%s', email='%s'\n", name, email)
 			count++
 		} else {
 			// Trata erro de duplicidade do banco (unique violation)

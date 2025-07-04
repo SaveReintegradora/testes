@@ -54,6 +54,14 @@ func SetupRoutes() *gin.Engine {
 	r.PUT("/clients/:id", clientCRUDController.Update)
 	r.DELETE("/clients/:id", clientCRUDController.Delete)
 	r.GET("/clients/export", clientExportController.ExportClients) // nova rota para exportação de clientes
+	r.GET("/clients/list", func(ctx *gin.Context) {
+		clients, err := clientRepo.GetAll()
+		if err != nil {
+			ctx.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(200, clients)
+	}) // endpoint temporário para listar todos os clientes
 
 	return r
 }
