@@ -6,11 +6,14 @@ import (
 	"minha-api/repositories"
 	"minha-api/utils"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func SetupRoutes() *gin.Engine {
 	r := gin.Default()
+
+	r.Use(cors.Default())
 
 	repo := repositories.NewBookRepository()
 	controller := controllers.NewBookController(repo)
@@ -58,6 +61,8 @@ func SetupRoutes() *gin.Engine {
 // Ajuste: Remove interfaces indefinidas e usa tipos concretos dos mocks
 func SetupRoutesWithReposAndS3(bookRepo repositories.BookRepositoryInterface, fileRepo repositories.FileProcessRepositoryInterface, s3uploader utils.S3Uploader, s3presigner utils.S3Presigner) *gin.Engine {
 	r := gin.Default()
+
+	r.Use(cors.Default())
 
 	controller := controllers.NewBookController(bookRepo)
 	fileController := controllers.NewFileProcessController(fileRepo, s3uploader, s3presigner)
